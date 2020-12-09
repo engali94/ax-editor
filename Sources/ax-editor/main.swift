@@ -4,6 +4,7 @@ import Foundation
 struct Terminal {
     private var originalTerminal: termios
     private let stdout: FileHandle  = .standardOutput
+    private let stdin: FileHandle  = .standardInput
     
     init() {
         let struct_pointer = UnsafeMutablePointer<termios>.allocate(capacity: 1)
@@ -47,6 +48,24 @@ struct Terminal {
         execute(command: .repositionCursor)
     }
     
+    func cursorPosition() -> Postion {
+        // https://vt100.net/docs/vt100-ug/chapter3.html#CPR
+        guard execute(command: .cursorCurrentPosition) == 4 else { return .init(x: 0, y: 0) }
+        var c: UInt8 = 0
+        var response: [UInt8] = []
+        
+        repeat {
+            read(STDIN_FILENO, &c, 1)
+            response.append(c)
+        } while c != UInt8(ascii: "R")
+        
+        let result = response
+            .map({ String(UnicodeScalar($0)) })
+            .compactMap(Int.init)
+            
+        return .init(result)
+    }
+    
     func getWindowSize() -> Size {
         var winSize = winsize()
         if (ioctl(stdout.fileDescriptor, TIOCGWINSZ, &winSize) == -1 || winSize.ws_col == 0) {
@@ -56,7 +75,9 @@ struct Terminal {
         }
     }
     
-    private func execute(command: ANSICommand) {
+    private typealias WriteResult = Int
+    @discardableResult
+    private func execute(command: ANSICommand) -> WriteResult {
         // STDOUT_FILENO
         write(stdout.fileDescriptor, command.rawValue, command.bytesCount)
     }
@@ -65,19 +86,35 @@ struct Terminal {
         let rows: UInt16
         let cols: UInt16
     }
+    
+    struct Postion {
+        let x: Int
+        let y: Int
+
+        init(x: Int, y: Int) {
+            self.x = x
+            self.y = y
+        }
+        
+        init(_ source: [Int]) {
+            precondition(source.count >= 2)
+            self.x = source[1]
+            self.y = source[0]
+        }
+    }
 }
 
 extension Terminal {
     enum ANSICommand: String {
         case clean
         case repositionCursor
-        case cursorPosition
+        case cursorCurrentPosition
         
         var rawValue: String {
             switch self {
             case .clean: return "\u{1b}[2J"
             case .repositionCursor: return "\u{1b}[H"
-            case .cursorPosition: return "\u{1b}[6n"
+            case .cursorCurrentPosition: return "\u{1b}[6n"
             }
         }
         
@@ -126,13 +163,17 @@ struct Editor {
             exitEditor()
         }
 
+        print(terminal.cursorPosition())
         print(String(UnicodeScalar(char)) + "\r\n")
     }
     
     func drawTildes() {
         let rows = terminal.getWindowSize().rows
-        for _ in 0..<rows {
-            terminal.writeOnScreen("~\r\n")
+        for row in 0..<rows {
+            terminal.writeOnScreen("~")
+            if row < rows - 1 {
+                terminal.writeOnScreen("\r\n")
+            }
         }
         terminal.restCursor()
     }
