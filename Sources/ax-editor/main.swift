@@ -75,6 +75,14 @@ struct Terminal {
         }
     }
     
+    private func hideCursor() {
+        execute(command: .hideCursor)
+    }
+    
+    private func showCursor() {
+        execute(command: .showCursor)
+    }
+    
     private typealias WriteResult = Int
     @discardableResult
     private func execute(command: ANSICommand) -> WriteResult {
@@ -109,12 +117,16 @@ extension Terminal {
         case clean
         case repositionCursor
         case cursorCurrentPosition
+        case showCursor
+        case hideCursor
         
         var rawValue: String {
             switch self {
             case .clean: return "\u{1b}[2J"
             case .repositionCursor: return "\u{1b}[H"
             case .cursorCurrentPosition: return "\u{1b}[6n"
+            case .showCursor: return "\u{1b}[?25h"
+            case .hideCursor: return "\u{1b}[?25l"
             }
         }
         
@@ -141,9 +153,9 @@ struct Editor {
     }
     
     func readKey() {
-        //terminal.refreshScreen()
         var char: UInt8 = 0
         while read(stdIn.fileDescriptor, &char, 1) == 1 {
+            //terminal.refreshScreen()
             processKeypress(char)
         }
     }
@@ -163,12 +175,13 @@ struct Editor {
             exitEditor()
         }
 
-        print(terminal.cursorPosition())
+       // print(terminal.cursorPosition())
         print(String(UnicodeScalar(char)) + "\r\n")
     }
     
     func drawTildes() {
         let rows = terminal.getWindowSize().rows
+        terminal.refreshScreen()
         for row in 0..<rows {
             terminal.writeOnScreen("~")
             if row < rows - 1 {
@@ -181,7 +194,7 @@ struct Editor {
     private func getControlKey(_ key: String) -> UInt8 {
         let buffer = [UInt8](key.utf8)
         guard var ctrl = buffer.first else { return 0 }
-        ctrl &= 0x1f
+        ctrl &= 0x1F
         return ctrl
     }
     
@@ -201,4 +214,11 @@ let stdIn = FileHandle.standardInput
 let terminal = Terminal()
 let originalTerm = terminal.enableRawMode()
 let editor = Editor(terminal: terminal)
+
+terminal.refreshScreen()
 editor.readKey()
+
+
+atexit {
+    terminal.disableRawMode()
+}
