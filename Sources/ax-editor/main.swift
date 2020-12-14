@@ -40,12 +40,22 @@ struct Terminal {
     }
     
     func refreshScreen() {
-        execute(command: .clean)
+        hideCursor()
+        clean()
         restCursor()
+        showCursor()
+    }
+    
+    func clean() {
+        execute(command: .clean)
     }
     
     func restCursor() {
         execute(command: .repositionCursor)
+    }
+    
+    func goto(position: Postion) {
+        
     }
     
     func cursorPosition() -> Postion {
@@ -75,15 +85,16 @@ struct Terminal {
         }
     }
     
-    private func hideCursor() {
+    func hideCursor() {
         execute(command: .hideCursor)
     }
     
-    private func showCursor() {
+    func showCursor() {
         execute(command: .showCursor)
     }
     
     private typealias WriteResult = Int
+    
     @discardableResult
     private func execute(command: ANSICommand) -> WriteResult {
         // STDOUT_FILENO
@@ -94,39 +105,29 @@ struct Terminal {
         let rows: UInt16
         let cols: UInt16
     }
-    
-    struct Postion {
-        let x: Int
-        let y: Int
 
-        init(x: Int, y: Int) {
-            self.x = x
-            self.y = y
-        }
-        
-        init(_ source: [Int]) {
-            precondition(source.count >= 2)
-            self.x = source[1]
-            self.y = source[0]
-        }
-    }
 }
 
 extension Terminal {
-    enum ANSICommand: String {
+    enum ANSICommand {
         case clean
+        case cleanLine
         case repositionCursor
         case cursorCurrentPosition
         case showCursor
         case hideCursor
+        case moveCursor(position: Postion)
         
         var rawValue: String {
             switch self {
             case .clean: return "\u{1b}[2J"
+            case .cleanLine: return "\u{1b}[K"
             case .repositionCursor: return "\u{1b}[H"
             case .cursorCurrentPosition: return "\u{1b}[6n"
             case .showCursor: return "\u{1b}[?25h"
             case .hideCursor: return "\u{1b}[?25l"
+            case let .moveCursor(position):
+                return "\u{1b}[\(position.y + 1);\(position.x + 1)H"
             }
         }
         
@@ -143,21 +144,64 @@ extension Terminal.Size: CustomStringConvertible {
     }
 }
 
+struct Postion {
+    let x: Int
+    let y: Int
+
+    init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+    }
+    
+    init(_ source: [Int]) {
+        precondition(source.count == 2)
+        self.x = source[1]
+        self.y = source[0]
+    }
+}
+
 struct Editor {
     
-    let terminal: Terminal
+    private let terminal: Terminal
+    private var quit = false
     
     init(terminal: Terminal) {
         self.terminal = terminal
         drawTildes()
     }
     
-    func readKey() {
+    func run() {
+        repeat {
+            update()
+            handleInput()
+        } while (quit == false)
+        exitEditor()
+    }
+    
+    func update() {
+        // 1. Adjust the terminal behaviour before rendering.
+        terminal.hideCursor()
+        terminal.restCursor()
+        // 2. render
+        render()
+        // 3. Adjust the terminal behaviour after the rendering.
+        terminal.goto(position: .init(x: 0, y: 0))
+        terminal.showCursor()
+    }
+    
+    func handleInput() {
+        let key = readKey()
+        processKeypress(key)
+    }
+    
+    func readKey() -> UInt8 {
         var char: UInt8 = 0
         while read(stdIn.fileDescriptor, &char, 1) == 1 {
-            //terminal.refreshScreen()
-            processKeypress(char)
+            // Terminal.refreshScreen()
+            //processKeypress(char)
+            return char
         }
+        return char
     }
     
     func processKeypress(_ char: UInt8) {
@@ -179,16 +223,37 @@ struct Editor {
         print(String(UnicodeScalar(char)) + "\r\n")
     }
     
+    func render() {
+        
+    }
     func drawTildes() {
         let rows = terminal.getWindowSize().rows
         terminal.refreshScreen()
+        terminal.hideCursor()
         for row in 0..<rows {
             terminal.writeOnScreen("~")
             if row < rows - 1 {
                 terminal.writeOnScreen("\r\n")
             }
         }
+        terminal.showCursor()
         terminal.restCursor()
+        showWelcomeMessage()
+    }
+
+    func showWelcomeMessage() {
+        let rows = terminal.getWindowSize().rows
+        for row in 0..<rows {
+            if row == 10 {
+                let message = "Welcome to ax editor version 0.1"
+                terminal.writeOnScreen(message)
+            }
+            
+            if row == 15 {
+                let message = "by Ali Hilal @engali94"
+                terminal.writeOnScreen(message)
+            }
+        }
     }
     
     private func getControlKey(_ key: String) -> UInt8 {
@@ -216,8 +281,8 @@ let originalTerm = terminal.enableRawMode()
 let editor = Editor(terminal: terminal)
 
 terminal.refreshScreen()
-editor.readKey()
-
+//editor.readKey()
+editor.run()
 
 atexit {
     terminal.disableRawMode()
