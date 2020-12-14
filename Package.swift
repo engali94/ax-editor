@@ -15,8 +15,11 @@ let package = Package(
     
     targets: [
         .target(
+            name: "Core",
+            dependencies: [.product(name: "ArgumentParser", package: "swift-argument-parser")]),
+        .target(
             name: "ax-editor",
-            dependencies: [.product(name: "ArgumentParser", package: "swift-argument-parser")]
+            dependencies: ["Core"]
         ),
         .testTarget(
             name: "ax-editorTests",
