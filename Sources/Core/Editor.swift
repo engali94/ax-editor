@@ -11,14 +11,20 @@ import Darwin
 public struct Editor {
     
     private let terminal: Terminal
+    private var size: Terminal.Size
+    private var cursorPosition: Postion
     private var quit = false
     
     public init(terminal: Terminal) {
         self.terminal = terminal
+        self.size = terminal.getWindowSize()
+        self.cursorPosition = terminal.cursorPosition()
     }
     
-    public func run() {
+    public mutating func run() {
         terminal.enableRawMode()
+        terminal.refreshScreen()
+        //drawTildes()
         repeat {
             update()
             handleInput()
@@ -26,31 +32,33 @@ public struct Editor {
         exitEditor()
     }
     
-    private func update() {
+    private mutating func update() {
+        print(#function)
         // 1. Adjust the terminal behaviour before rendering.
+        //terminal.clean()
         terminal.hideCursor()
         terminal.restCursor()
         // 2. render
         render()
         // 3. Adjust the terminal behaviour after the rendering.
-        terminal.goto(position: .init(x: 0, y: 0))
-        terminal.showCursor()
+        //terminal.goto(position: .init(x: 0, y: 0))
+        terminal.restCursor()
     }
     
-    private func handleInput() {
+    private mutating func handleInput() {
         let key = readKey()
-        processKeypress(key)
+        //if  key != 0 {
+            processKeypress(key)
+       // }
     }
     
-    private func readKey() -> UInt8 {
+    private mutating func readKey() -> UInt8 {
         var char: UInt8 = 0
-        while read(STDIN_FILENO, &char, 1) == 1 {
-            return char
-        }
+        while read(STDIN_FILENO, &char, 1) != 1 { }
         return char
     }
     
-    private func processKeypress(_ char: UInt8) {
+    private mutating func processKeypress(_ char: UInt8) {
         if (iscntrl(Int32(char)) != 0) {
            // print("control key ", char)
         }
@@ -62,29 +70,45 @@ public struct Editor {
         if getControlKey("q") == char {
             print("Quit the editor")
             exitEditor()
+            quit = true
         }
-
-       // print(terminal.cursorPosition())
-        print(String(UnicodeScalar(char)) + "\r\n")
+        // print(terminal.cursorPosition())
+        terminal.print(String(UnicodeScalar(char)) + "\r\n")
     }
     
     private func render() {
-        
+        drawTildes()
     }
     
     private func drawTildes() {
         let rows = terminal.getWindowSize().rows
-        terminal.refreshScreen()
-        terminal.hideCursor()
+        var str = ""
         for row in 0..<rows {
-            terminal.writeOnScreen("~")
+            if row == rows / 3 {
+                let message = "Welcome to ax editor version 0.1"
+                var padding = (Int(terminal.getWindowSize().cols) - message.count) / 2
+                     if (padding > 0) {
+                        str.append("~")
+                        padding -= 1
+                }
+                while padding > 0 {
+                    str.append(" ")
+                    padding -= 1
+                }
+                str.append(message)
+            } else {
+                str.append("~")
+            }
+            
+            str.append("\u{1b}[K")
+ 
             if row < rows - 1 {
-                terminal.writeOnScreen("\r\n")
+                str.append("\r\n")
+               // terminal.cleanLine()
             }
         }
-        terminal.showCursor()
-        terminal.restCursor()
-        showWelcomeMessage()
+        terminal.print(str)
+       // showWelcomeMessage()
     }
 
     private func showWelcomeMessage() {
@@ -92,12 +116,12 @@ public struct Editor {
         for row in 0..<rows {
             if row == 10 {
                 let message = "Welcome to ax editor version 0.1"
-                terminal.writeOnScreen(message)
+                terminal.print(message)
             }
             
             if row == 15 {
                 let message = "by Ali Hilal @engali94"
-                terminal.writeOnScreen(message)
+                terminal.print(message)
             }
         }
     }
@@ -110,6 +134,7 @@ public struct Editor {
     }
     
     private func exitEditor() {
+        //quit = true
         terminal.refreshScreen()
         terminal.disableRawMode()
         exit(0)

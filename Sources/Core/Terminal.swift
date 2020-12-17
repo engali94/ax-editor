@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if os(macOS)
 import Darwin
+#else
+import Glibc
+#endif
 
 public struct Terminal {
     private var originalTerminal: termios
@@ -21,16 +25,20 @@ public struct Terminal {
     }
     
     @discardableResult
-    func enableRawMode() -> termios {
+    public func enableRawMode() -> termios {
         var raw: termios = originalTerminal
         tcgetattr(stdout.fileDescriptor, &raw)
 
         let original = raw
 
         raw.c_lflag &= ~(UInt(ECHO | ICANON | IEXTEN | ISIG))
-        raw.c_iflag &= ~(UInt(ICRNL | IXON))
+        raw.c_iflag &= ~(UInt(BRKINT | ICRNL | INPCK | ISTRIP | IXON))
+        // IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
         raw.c_oflag &= ~(UInt(OPOST))
-        
+        raw.c_cflag |= UInt((CS8))
+        raw.c_cc.16 = 0 // VMIN
+        raw.c_cc.17 = 1 // VTIME 1/10 = 100 ms
+    
         tcsetattr(stdout.fileDescriptor, TCSAFLUSH, &raw)
 
         return original
@@ -41,7 +49,7 @@ public struct Terminal {
         tcsetattr(stdout.fileDescriptor, TCSAFLUSH, &term);
     }
     
-    func writeOnScreen(_ text: String) {
+    func print(_ text: String) {
         let bytesCount = text.utf8.count
         write(stdout.fileDescriptor, text, bytesCount)
     }
@@ -57,12 +65,16 @@ public struct Terminal {
         execute(command: .clean)
     }
     
+    func cleanLine() {
+        execute(command: .cleanLine)
+    }
+    
     func restCursor() {
         execute(command: .repositionCursor)
     }
     
     func goto(position: Postion) {
-        
+        execute(command: .moveCursor(position: position))
     }
     
     func cursorPosition() -> Postion {
