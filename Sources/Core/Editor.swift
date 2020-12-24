@@ -8,23 +8,27 @@
 import Foundation
 import Darwin
 
-public struct Editor {
+public final class Editor {
     
-    private let terminal: Terminal
-    private var size: Terminal.Size
+    private var terminal: Terminal
+    private var size: Size
     private var cursorPosition: Postion
     private var quit = false
     
     public init(terminal: Terminal) {
         self.terminal = terminal
         self.size = terminal.getWindowSize()
-        self.cursorPosition = terminal.cursorPosition()
+        self.cursorPosition = .init([1,2])//terminal.cursorPosition()
     }
     
-    public mutating func run() {
+    public func run() {
         terminal.enableRawMode()
-        terminal.refreshScreen()
         //drawTildes()
+        terminal.onWindowSizeChange = { [weak self] newSize in
+            print("Termial resized", newSize)
+            self?.size = newSize
+        }
+        
         repeat {
             update()
             handleInput()
@@ -32,33 +36,34 @@ public struct Editor {
         exitEditor()
     }
     
-    private mutating func update() {
-        print(#function)
-        // 1. Adjust the terminal behaviour before rendering.
-        //terminal.clean()
+    private func update() {
         terminal.hideCursor()
         terminal.restCursor()
-        // 2. render
-        render()
-        // 3. Adjust the terminal behaviour after the rendering.
-        //terminal.goto(position: .init(x: 0, y: 0))
+        //render()
+        terminal.goto(position: .init(x: cursorPosition.x + 1, y: cursorPosition.y + 1))
         terminal.restCursor()
     }
     
-    private mutating func handleInput() {
+    private func handleInput() {
         let key = readKey()
-        //if  key != 0 {
-            processKeypress(key)
-       // }
+        processKeypress(key)
     }
     
-    private mutating func readKey() -> UInt8 {
-        var char: UInt8 = 0
-        while read(STDIN_FILENO, &char, 1) != 1 { }
-        return char
+    private func readKey() -> UInt8 {
+        // TODO: This should read from terminal not.
+        // From the stdin directly.
+        if terminal.poll(timeout: .milliseconds(16)) {
+            print("\n\n\n\nInput avalilabel")
+//            var char: UInt8 = 0
+//            read(STDIN_FILENO, &char, 1) //!= 1 { }
+//            return char
+            terminal.reade()
+        }
+        
+       return 0
     }
     
-    private mutating func processKeypress(_ char: UInt8) {
+    private func processKeypress(_ char: UInt8) {
         if (iscntrl(Int32(char)) != 0) {
            // print("control key ", char)
         }
@@ -73,16 +78,18 @@ public struct Editor {
             quit = true
         }
         // print(terminal.cursorPosition())
-        terminal.print(String(UnicodeScalar(char)) + "\r\n")
+        print(String(UnicodeScalar(char)))
+        terminal.writeOnScreen(String(UnicodeScalar(char)) + "\r\n")
     }
     
     private func render() {
         drawTildes()
     }
     
+    
     private func drawTildes() {
-        let rows = terminal.getWindowSize().rows
         var str = ""
+        let rows = terminal.getWindowSize().rows
         for row in 0..<rows {
             if row == rows / 3 {
                 let message = "Welcome to ax editor version 0.1"
@@ -107,24 +114,24 @@ public struct Editor {
                // terminal.cleanLine()
             }
         }
-        terminal.print(str)
+        terminal.writeOnScreen(str)
        // showWelcomeMessage()
     }
-
-    private func showWelcomeMessage() {
-        let rows = terminal.getWindowSize().rows
-        for row in 0..<rows {
-            if row == 10 {
-                let message = "Welcome to ax editor version 0.1"
-                terminal.print(message)
-            }
-            
-            if row == 15 {
-                let message = "by Ali Hilal @engali94"
-                terminal.print(message)
-            }
-        }
-    }
+//
+//    private func showWelcomeMessage() {
+//        let rows = terminal.getWindowSize().rows
+//        for row in 0..<rows {
+//            if row == 10 {
+//                let message = "Welcome to ax editor version 0.1"
+//                terminal.print(message)
+//            }
+//
+//            if row == 15 {
+//                let message = "by Ali Hilal @engali94"
+//                terminal.print(message)
+//            }
+//        }
+//    }
     
     private func getControlKey(_ key: String) -> UInt8 {
         let buffer = [UInt8](key.utf8)
@@ -144,11 +151,53 @@ public struct Editor {
 extension Editor {
     enum Key {
         case char(UInt8)
+        case up
+        case down
+        case left
+        case right
     }
     
     enum Event {
         case backspace
     }
+    
+    // KeyBinding
+    enum ControlKey {
+        case ctrl(key: Key)
+        case alt(key: Key)
+        case shift(key: Key)
+    }
+//    // Keys without modifiers
+//      enum Key {
+//        Char(char),
+//        Up,
+//        Down,
+//        Left,
+//        Right,
+//        Backspace,
+//        Enter,
+//        Tab,
+//        Home,
+//        End,
+//        PageUp,
+//        PageDown,
+//        BackTab,
+//        Delete,
+//        Insert,
+//        Null,
+//        Esc,
+//    }
+    
+//    bitflags! {
+//        /// Represents key modifiers (shift, control, alt).
+//        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+//        pub struct KeyModifiers: u8 {
+//            const SHIFT = 0b0000_0001;
+//            const CONTROL = 0b0000_0010;
+//            const ALT = 0b0000_0100;
+//            const NONE = 0b0000_0000;
+//        }
+//    }
 }
 
 struct Document {

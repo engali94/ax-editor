@@ -6,22 +6,28 @@
 //
 
 import Foundation
-#if os(macOS)
-import Darwin
+#if os(Linux)
+  import Glibc
 #else
-import Glibc
+  import Darwin
 #endif
 
-public struct Terminal {
+public final class Terminal {
     private var originalTerminal: termios
     private let stdout: FileHandle  = .standardOutput
     private let stdin: FileHandle  = .standardInput
+    private let reader: EventReader
+    private let interceptor =  SignalInterceptor()
+    
+    public var onWindowSizeChange: ((Size) -> Void)?
     
     public init() {
         let struct_pointer = UnsafeMutablePointer<termios>.allocate(capacity: 1)
         let struct_memory = struct_pointer.pointee
         struct_pointer.deallocate()
         originalTerminal = struct_memory
+        reader = EventReader(parser: EventParser())
+        listenToWindowSizeChange()
     }
     
     @discardableResult
@@ -31,25 +37,35 @@ public struct Terminal {
 
         let original = raw
 
-        raw.c_lflag &= ~(UInt(ECHO | ICANON | IEXTEN | ISIG))
-        raw.c_iflag &= ~(UInt(BRKINT | ICRNL | INPCK | ISTRIP | IXON))
-        // IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
-        raw.c_oflag &= ~(UInt(OPOST))
-        raw.c_cflag |= UInt((CS8))
-        raw.c_cc.16 = 0 // VMIN
-        raw.c_cc.17 = 1 // VTIME 1/10 = 100 ms
+        cfmakeraw(&raw)
+//        raw.c_lflag &= ~(UInt(ECHO | ICANON | IEXTEN | ISIG))
+//        raw.c_iflag &= ~(UInt(BRKINT | ICRNL | INPCK | ISTRIP | IXON))
+//        // IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
+//        raw.c_oflag &= ~(UInt(OPOST))
+//        raw.c_cflag |= UInt((CS8))
+//
+//        raw.c_cc.16 = 0 // VMIN
+//        raw.c_cc.17 = 1 // VTIME 1/10 = 100 ms
     
         tcsetattr(stdout.fileDescriptor, TCSAFLUSH, &raw)
-
         return original
     }
     
     func disableRawMode() {
         var term = originalTerminal
-        tcsetattr(stdout.fileDescriptor, TCSAFLUSH, &term);
+        tcsetattr(stdout.fileDescriptor, TCSAFLUSH, &term)
     }
     
-    func print(_ text: String) {
+    func poll(timeout: Timeout) -> Bool {
+        reader.poll(timeout: timeout)
+    }
+    
+    func reade() {
+        let res = reader.readBuffer()
+        print(res)
+    }
+    
+    func writeOnScreen(_ text: String) {
         let bytesCount = text.utf8.count
         write(stdout.fileDescriptor, text, bytesCount)
     }
@@ -112,6 +128,14 @@ public struct Terminal {
         execute(command: .showCursor)
     }
     
+    private func listenToWindowSizeChange() {
+        interceptor.intercept {
+            let newSize = self.getWindowSize()
+            self.onWindowSizeChange?(newSize)
+            
+        }
+    }
+    
     private typealias WriteResult = Int
     
     @discardableResult
@@ -120,11 +144,6 @@ public struct Terminal {
         write(stdout.fileDescriptor, command.rawValue, command.bytesCount)
     }
     
-    struct Size {
-        let rows: UInt16
-        let cols: UInt16
-    }
-
 }
 
 extension Terminal {
@@ -154,11 +173,24 @@ extension Terminal {
             rawValue.utf8.count
         }
     }
+    
+    enum KeyEvent {
+       // case
+    }
+}
+
+public struct Size {
+    public let rows: UInt16
+    public let cols: UInt16
 }
 
 
-extension Terminal.Size: CustomStringConvertible {
-    var description: String {
+extension Size: CustomStringConvertible {
+    public var description: String {
         return "rows: \(rows), cols: \(cols)"
     }
 }
+
+// Event Handling
+
+
