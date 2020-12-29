@@ -8,8 +8,8 @@
 import Foundation
 
 struct Postion {
-    let x: Int
-    let y: Int
+    var x: Int
+    var y: Int
 
     init(x: Int, y: Int) {
         self.x = x

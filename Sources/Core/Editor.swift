@@ -1,150 +1,201 @@
-//
-//  Editor.swift
-//  ArgumentParser
-//
-//  Created by Ali on 14.12.2020.
-//
+/**
+ *  Ax Editor
+ *  Copyright (c) Ali Hilal 2020
+ *  MIT license - see LICENSE.md
+ */
 
 import Foundation
 import Darwin
 
 public final class Editor {
     
-    private var terminal: Terminal
+    private let terminal: Terminal
+    private var document: Document
     private var size: Size
     private var cursorPosition: Postion
     private var quit = false
     
-    public init(terminal: Terminal) {
+    public init(terminal: Terminal, document: Document) {
         self.terminal = terminal
+        self.document = document
         self.size = terminal.getWindowSize()
-        self.cursorPosition = .init([1,2])//terminal.cursorPosition()
+        self.cursorPosition = .init(x: 0, y: 0)
     }
     
     public func run() {
         terminal.enableRawMode()
+        write(STDIN_FILENO, "\u{1b}[?1049h", "\u{1b}[?1049h".utf8.count)
         //drawTildes()
         terminal.onWindowSizeChange = { [weak self] newSize in
             print("Termial resized", newSize)
             self?.size = newSize
+            self?.update()
         }
         
         repeat {
             update()
-            handleInput()
+          //  handleInput()
+            readKey()
         } while (quit == false)
         exitEditor()
+        write(STDIN_FILENO, "\u{1b}[?1049h", "\u{1b}[?1049l".utf8.count)
     }
     
     private func update() {
         terminal.hideCursor()
         terminal.restCursor()
-        //render()
-        terminal.goto(position: .init(x: cursorPosition.x + 1, y: cursorPosition.y + 1))
-        terminal.restCursor()
+        terminal.clean()
+        render()
+        terminal.showCursor()
+        terminal.flush()
+        terminal.goto(position: .init(x: document.cursorPosition.x + 4, y: document.cursorPosition.y))
     }
     
-    private func handleInput() {
-        let key = readKey()
-        processKeypress(key)
+    private func readKey() {
+        while true {
+            if terminal.poll(timeout: .milliseconds(16)) {
+               // print("\n\n\n\nInput avalilabel")
+                if let event = terminal.reade() {
+                    if event == .key(.init(code: .undefined)) { continue }
+                    processInput(event)
+                    break
+                }
+            } else {
+                continue
+            }
+        }
     }
     
-    private func readKey() -> UInt8 {
-        // TODO: This should read from terminal not.
-        // From the stdin directly.
-        if terminal.poll(timeout: .milliseconds(16)) {
-            print("\n\n\n\nInput avalilabel")
-//            var char: UInt8 = 0
-//            read(STDIN_FILENO, &char, 1) //!= 1 { }
-//            return char
-            terminal.reade()
+    private func processInput(_ event: Event) {
+        switch event {
+        case let .key(event):
+            if case .char(let value) = event.code {
+               // terminal.writeOnScreen(String(value))
+                document.execute(.insert(char: String(value), position: cursorPosition))
+            }
+            if event.code == .backspace {
+                if cursorPosition.x == 0 && cursorPosition.y != 0 {
+                    document.execute(.spliceUp)
+                } else if cursorPosition.x == 0 && cursorPosition.y == 0 {
+                    return
+                } else {
+                    document.execute(.delete(position: cursorPosition))
+                }
+            }
+            
+            if let dir = mapKeyEventToDirection(event.code) {
+                document.execute(.moveTo(direction: dir))
+            }
+            
+            if event.code == .enter {
+                if cursorPosition.x == 0 {
+                    document.execute(.insertLineAbove(position: cursorPosition))
+                } else if cursorPosition.x == document.row(atPosition: cursorPosition).length() {
+                    document.execute(.insertLineBelow(position: cursorPosition))
+                } else {
+                    document.execute(.splitLine)
+                }
+            }
+            if event.code == .char("d") && event.modifiers == .some(.control) {
+                print("Quit the editor")
+                exitEditor()
+                quit = true
+            }
         }
-        
-       return 0
     }
     
-    private func processKeypress(_ char: UInt8) {
-        if (iscntrl(Int32(char)) != 0) {
-           // print("control key ", char)
+    private func mapKeyEventToDirection(_ code: KeyCode) -> Direction? {
+        switch code {
+        case .up: return .up
+        case .down: return .down
+        case .left: return .left
+        case .right: return .right
+        default: return nil
         }
-        
-        if char == 0x04 { // detect EOF (Ctrl+D)
-            exitEditor()
-        }
-        
-        if getControlKey("q") == char {
-            print("Quit the editor")
-            exitEditor()
-            quit = true
-        }
-        // print(terminal.cursorPosition())
-        print(String(UnicodeScalar(char)))
-        terminal.writeOnScreen(String(UnicodeScalar(char)) + "\r\n")
     }
     
     private func render() {
         drawTildes()
     }
     
-    
     private func drawTildes() {
-        var str = ""
+        var frame = [""]
         let rows = terminal.getWindowSize().rows
+        cursorPosition = document.cursorPosition
         for row in 0..<rows {
-            if row == rows / 3 {
-                let message = "Welcome to ax editor version 0.1"
-                var padding = (Int(terminal.getWindowSize().cols) - message.count) / 2
-                     if (padding > 0) {
-                        str.append("~")
-                        padding -= 1
-                }
-                while padding > 0 {
-                    str.append(" ")
-                    padding -= 1
-                }
-                str.append(message)
+            if row == size.rows - 1 {
+                // Render Command line.
+                frame.append("Command line appears here".bold())
+            } else if row == size.rows - 2 {
+                // Render status line.
+                frame.append(
+                    "Status line"
+                        .yellow()
+                        .bold()
+                        .backgroundColor(.cadetBlue)
+                )
+            } else if row == size.rows / 4 && document.showsWelcome {
+                // Render welcome message if necessary.
+                frame.append(makeWelcomeMessage("Welcome to ax editor version 0.1"))
+            } else if row == size.rows / 4 + 1  && document.showsWelcome {
+                frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
+            } else if let line = document.row(atIndex: Int(row))  {
+                // render the line
+                print("Will render: ", line.render(at: Int(row + 1)))
+                frame.append(line.render(at: Int(row + 1)))
             } else {
-                str.append("~")
-            }
-            
-            str.append("\u{1b}[K")
- 
-            if row < rows - 1 {
-                str.append("\r\n")
-               // terminal.cleanLine()
+                let tilde = "~"
+                    .darkGray()
+                    .padding(direction: .left, count: 1)
+                frame.append(tilde)
             }
         }
-        terminal.writeOnScreen(str)
-       // showWelcomeMessage()
+        terminal.writeOnScreen(frame.joined(separator: "\r\n"))
     }
-//
-//    private func showWelcomeMessage() {
-//        let rows = terminal.getWindowSize().rows
-//        for row in 0..<rows {
-//            if row == 10 {
-//                let message = "Welcome to ax editor version 0.1"
-//                terminal.print(message)
-//            }
-//
-//            if row == 15 {
-//                let message = "by Ali Hilal @engali94"
-//                terminal.print(message)
-//            }
-//        }
-//    }
     
-    private func getControlKey(_ key: String) -> UInt8 {
-        let buffer = [UInt8](key.utf8)
-        guard var ctrl = buffer.first else { return 0 }
-        ctrl &= 0x1F
-        return ctrl
+    private func makeWelcomeMessage(_ message: String) -> String {
+        let paddingCount = Int(size.cols) / 2  - (message.count / 2)
+        var str = ""
+        let paddedMsg = message.padding(direction: .left, count: paddingCount)
+        str = str
+            .appending("~") // draw tilde
+            .darkGray()
+            .padding(direction: .left, count: 1)
+            .appending(paddedMsg)
+            .green()
+            //.white()//.colorize(with: .white)
+        return str
     }
+    
+//    private func getControlKey(_ key: String) -> UInt8 {
+//        let buffer = [UInt8](key.utf8)
+//        guard var ctrl = buffer.first else { return 0 }
+//        ctrl &= 0x1F
+//        return ctrl
+//    }
     
     private func exitEditor() {
         //quit = true
         terminal.refreshScreen()
         terminal.disableRawMode()
         exit(0)
+    }
+}
+
+extension String {
+    enum PaddingDirection {
+        case right
+        case left
+    }
+    
+    func padding(direction: PaddingDirection, count: Int) -> String {
+        let padding = String(repeating: " ", count: count)
+        switch direction {
+        case .left:
+            return padding + self
+        case .right:
+            return self + padding
+        }
     }
 }
 
@@ -156,50 +207,11 @@ extension Editor {
         case left
         case right
     }
-    
-    enum Event {
-        case backspace
-    }
-    
+
     // KeyBinding
     enum ControlKey {
         case ctrl(key: Key)
         case alt(key: Key)
         case shift(key: Key)
     }
-//    // Keys without modifiers
-//      enum Key {
-//        Char(char),
-//        Up,
-//        Down,
-//        Left,
-//        Right,
-//        Backspace,
-//        Enter,
-//        Tab,
-//        Home,
-//        End,
-//        PageUp,
-//        PageDown,
-//        BackTab,
-//        Delete,
-//        Insert,
-//        Null,
-//        Esc,
-//    }
-    
-//    bitflags! {
-//        /// Represents key modifiers (shift, control, alt).
-//        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-//        pub struct KeyModifiers: u8 {
-//            const SHIFT = 0b0000_0001;
-//            const CONTROL = 0b0000_0010;
-//            const ALT = 0b0000_0100;
-//            const NONE = 0b0000_0000;
-//        }
-//    }
-}
-
-struct Document {
-    
 }
