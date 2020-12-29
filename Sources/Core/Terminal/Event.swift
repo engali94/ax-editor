@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum Event {
+public enum Event: Equatable {
     case key(KeyEvent)
    //case resize
    //case mouse
@@ -22,7 +22,7 @@ extension Event: CustomStringConvertible{
     }
 }
 
-public enum KeyModifier: UInt8 {
+public enum KeyModifier: UInt8, Equatable {
     case control  = 1
     case shift    = 2
     case alt      = 3
@@ -40,7 +40,7 @@ extension KeyModifier: CustomStringConvertible {
     }
 }
 
-public struct KeyEvent {
+public struct KeyEvent: Equatable {
     /// The key itself.
     public let code: KeyCode
     /// Additional key modifiers.
@@ -59,7 +59,7 @@ extension KeyEvent: CustomStringConvertible {
 }
 
 /// A type that represents a key.
-public enum KeyCode {
+public enum KeyCode: Equatable {
     /// Undefined.
     case undefined
     /// Backspace key.

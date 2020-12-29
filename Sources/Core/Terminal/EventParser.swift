@@ -36,6 +36,9 @@ public struct EventParser {
             else if byte == NonPrintableChar.newLine.rawValue {
                 return .key(.init(code: .enter))
             }
+            else if byte == NonPrintableChar.backspace.rawValue {
+                return .key(.init(code: .backspace))
+            }
             else if iscntrl(Int32(byte)) != 0 {
                 var ascii: UInt8 = 0
                 if  1...26 ~= byte {

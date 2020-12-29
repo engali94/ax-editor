@@ -60,14 +60,22 @@ public final class Terminal {
         reader.poll(timeout: timeout)
     }
     
-    func reade() {
-        let res = reader.readBuffer()
-        print(res)
+    func reade() -> Event? {
+        switch reader.readBuffer() {
+        case .success(let event): return event
+        case .failure(let error):
+            print(error.localizedDescription)
+            return nil
+        }
     }
     
     func writeOnScreen(_ text: String) {
         let bytesCount = text.utf8.count
         write(stdout.fileDescriptor, text, bytesCount)
+    }
+    
+    func flush() {
+        fflush(__stdoutp)
     }
     
     func refreshScreen() {
@@ -86,7 +94,8 @@ public final class Terminal {
     }
     
     func restCursor() {
-        execute(command: .repositionCursor)
+       // execute(command: .repositionCursor)
+        execute(command: .moveCursor(position: .init(x: 0, y: 0)))
     }
     
     func goto(position: Postion) {
@@ -190,7 +199,3 @@ extension Size: CustomStringConvertible {
         return "rows: \(rows), cols: \(cols)"
     }
 }
-
-// Event Handling
-
-

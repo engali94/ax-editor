@@ -44,16 +44,7 @@ public final class EventReader {
         }
         
         buffer = Array(buffer[0..<readCount])
-        let x = buffer.map({ b in
-            return String(UnicodeScalar(b))
-        })
-        write(STDOUT_FILENO, Terminal.ANSICommand.clean.rawValue, Terminal.ANSICommand.clean.bytesCount)
-        print("\rBuffer String: ", x , "\r\n\n")
-        print("Buffer: ", buffer , "\r\n\n")
-        print("Count: ", readCount, "\n")
-       // readCount = 0
         return .success(parser.parse(buffer: &buffer) ?? .key(.init(code: .undefined)))
-        //return .success(.key(.init(code: .backTab, modifiers: nil)))
     }
     
 }
