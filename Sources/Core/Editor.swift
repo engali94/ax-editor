@@ -8,7 +8,6 @@ import Foundation
 import Darwin
 
 public final class Editor {
-    
     private let terminal: Terminal
     private var document: Document
     private var size: Size
@@ -115,10 +114,6 @@ public final class Editor {
     }
     
     private func render() {
-        drawTildes()
-    }
-    
-    private func drawTildes() {
         var frame = [""]
         let rows = terminal.getWindowSize().rows
         cursorPosition = document.cursorPosition
@@ -141,7 +136,7 @@ public final class Editor {
                 frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
             } else if let line = document.row(atIndex: Int(row))  {
                 // render the line
-                print("Will render: ", line.render(at: Int(row + 1)))
+                //print("Will render: ", line.render(at: Int(row + 1)))
                 frame.append(line.render(at: Int(row + 1)))
             } else {
                 let tilde = "~"
@@ -166,13 +161,6 @@ public final class Editor {
             //.white()//.colorize(with: .white)
         return str
     }
-    
-//    private func getControlKey(_ key: String) -> UInt8 {
-//        let buffer = [UInt8](key.utf8)
-//        guard var ctrl = buffer.first else { return 0 }
-//        ctrl &= 0x1F
-//        return ctrl
-//    }
     
     private func exitEditor() {
         //quit = true
@@ -214,4 +202,19 @@ extension Editor {
         case alt(key: Key)
         case shift(key: Key)
     }
+}
+
+struct Config {
+    
+}
+
+struct Defaults {
+    static let lineNoLeftPaddig   = 1 // |<-1
+    static let lineNoRightPadding = 2 // 1-->...
+    // line number and tilde color
+    // default background color
+    // default text color
+    // default status line color
+    // Tab width
+    
 }

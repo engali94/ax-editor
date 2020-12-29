@@ -63,7 +63,6 @@ extension Document {
 }
 
 // MARK: - Private Helpers
-
 private extension Document {
     func insert(character: String, at position: Postion) {
         rows[position.y].insert(char: character, at: position.x)
@@ -78,10 +77,18 @@ private extension Document {
     
     func moveCursor(toDirection dir: Direction) {
         switch dir {
-        case .up: cursorPosition.y -= 1
-        case .down: cursorPosition.y += 1
-        case .left: cursorPosition.x -= 1
-        case .right: cursorPosition.x += 1
+        case .up:
+            if cursorPosition.y <= 0 { return }
+            cursorPosition.y -= 1
+        case .down:
+            if cursorPosition.y >= rows.count - 1 { return }
+            cursorPosition.y += 1
+        case .left:
+            if cursorPosition.x <= 0 { return }
+            cursorPosition.x -= 1
+        case .right:
+            if cursorPosition.x >= row(atPosition: cursorPosition).length() { return }
+            cursorPosition.x += 1
         }
     }
     
@@ -90,10 +97,12 @@ private extension Document {
     }
     
     func insert(row: Row, at rowIndex: Int) {
+        guard rowIndex <= rows.count else { return }
         rows.insert(row, at: rowIndex)
     }
     
     func removeRow(at pos: Postion) {
+        guard pos.y > 0 else { return }
         rows.remove(at: pos.y)
     }
     
@@ -115,4 +124,5 @@ private extension Document {
         removeRow(at: cursorPosition)
         moveCursor(toPosition: .init(x: newRowText.count, y: cursorPosition.y - 1))
     }
+    
 }
