@@ -30,12 +30,13 @@ public final class Row {
         text = newString
     }
     
-    func delete(at index: Int) {
-        guard index >= 0 && index < text.count  else { return }
+    func delete(at index: Int) -> String {
+        guard index >= 0 && index < text.count  else { return "" }
         isUpdated = true
         var t = Array(text)
-        t.remove(at: index)
+        let char = t.remove(at: index)
         text = String(t)//.remove(at: index)
+        return String(char)
     }
     
     func update(text newText: String) {

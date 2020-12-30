@@ -68,10 +68,6 @@ public final class Editor {
     private func processInput(_ event: Event) {
         switch event {
         case let .key(event):
-            if case .char(let value) = event.code {
-               // terminal.writeOnScreen(String(value))
-                document.execute(.insert(char: String(value), position: cursorPosition))
-            }
             if event.code == .backspace {
                 if cursorPosition.x == 0 && cursorPosition.y != 0 {
                     document.execute(.spliceUp)
@@ -96,9 +92,24 @@ public final class Editor {
                 }
             }
             if event.code == .char("d") && event.modifiers == .some(.control) {
-                print("Quit the editor")
                 exitEditor()
-                quit = true
+                return
+            }
+            
+            if event.code == .char("u") && event.modifiers == .some(.control) {
+                document.undo()
+                return
+            }
+            
+            if event.code == .char("r") && event.modifiers == .some(.control) {
+                document.redo()
+                return
+            }
+            
+            if case .char(let value) = event.code {
+               // terminal.writeOnScreen(String(value))
+                if event.modifiers == .some(.control)  { return }
+                document.execute(.insert(char: String(value), position: cursorPosition))
             }
         }
     }
@@ -135,8 +146,6 @@ public final class Editor {
             } else if row == size.rows / 4 + 1  && document.showsWelcome {
                 frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
             } else if let line = document.row(atIndex: Int(row))  {
-                // render the line
-                //print("Will render: ", line.render(at: Int(row + 1)))
                 frame.append(line.render(at: Int(row + 1)))
             } else {
                 let tilde = "~"
@@ -163,7 +172,7 @@ public final class Editor {
     }
     
     private func exitEditor() {
-        //quit = true
+        quit = true
         terminal.refreshScreen()
         terminal.disableRawMode()
         exit(0)
