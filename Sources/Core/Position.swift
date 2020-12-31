@@ -22,3 +22,9 @@ struct Postion {
         self.y = source[0]
     }
 }
+
+extension Postion {
+    static func zero() -> Self {
+        .init(x: 0, y: 0)
+    }
+}

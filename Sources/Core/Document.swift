@@ -44,7 +44,7 @@ public final class Document {
             rows.insert(Row(text: ""), at: Int(position.y + 1))
             moveCursor(toDirection: .down)
             moveCursor(toPosition: .init(x: 0, y: cursorPosition.y))
-            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .down))}
+            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .up))}
         case .splitLine:
             splitLine()
             commit(event) { undoStack.push(.spliceUp)}
@@ -76,6 +76,31 @@ public final class Document {
     
     func row(atIndex index: Int) -> Row? {
         rows[safe: index]
+    }
+    
+    func scrollIfNeeded(size: Size) {
+//        let maxY = size.rows
+//        let maxX = size.cols
+//        let midY = maxY / 2
+//        let midX = maxX / 2
+//        if lineOffset.x == 0 && cursorPosition.y < maxY && cursorPosition.x < maxX {
+//            lineOffset = .zero()
+//        } else {
+//            lineOffset.y = cursorPosition.y - Int(midY)
+//            cursorPosition.y = Int(midY)
+//            if cursorPosition.x > maxX {
+//                lineOffset.x = cursorPosition.x - Int(midX)
+//                cursorPosition.x = Int(midX)
+//            }
+//        }
+//        if cursorPosition.y < lineOffset.y {
+//            lineOffset.y  = cursorPosition.y
+//        }
+        if cursorPosition.y >= lineOffset.y + Int(size.rows) - 2{
+            lineOffset.y += 1 //cursorPosition.y - Int(size.rows) + 1
+        } else {
+            lineOffset.y = max(0, lineOffset.y - 1)
+        }
     }
 }
 
@@ -136,7 +161,6 @@ private extension Document {
     func removeRow(at pos: Postion) {
         guard pos.y > 0 else { return }
         rows.remove(at: pos.y)
-        
     }
     
     func splitLine() {
@@ -162,6 +186,8 @@ private extension Document {
     func deleteLine(at position: Postion, direction: Direction) {
         removeRow(at: position)
         moveCursor(toDirection: direction)
+        let row = self.row(atPosition: cursorPosition) // the previous line
+        moveCursor(toPosition: .init(x: row.length(), y: cursorPosition.y))
     }
 }
 

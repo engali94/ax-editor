@@ -47,20 +47,18 @@ public final class Editor {
         render()
         terminal.showCursor()
         terminal.flush()
+        document.scrollIfNeeded(size: terminal.getWindowSize())
         terminal.goto(position: .init(x: document.cursorPosition.x + 4, y: document.cursorPosition.y))
     }
     
     private func readKey() {
         while true {
             if terminal.poll(timeout: .milliseconds(16)) {
-               // print("\n\n\n\nInput avalilabel")
                 if let event = terminal.reade() {
                     if event == .key(.init(code: .undefined)) { continue }
                     processInput(event)
                     break
                 }
-            } else {
-                continue
             }
         }
     }
@@ -128,7 +126,9 @@ public final class Editor {
         var frame = [""]
         let rows = terminal.getWindowSize().rows
         cursorPosition = document.cursorPosition
+        let offset = document.lineOffset
         for row in 0..<rows {
+           // row += UInt16(offset.y)
             if row == size.rows - 1 {
                 // Render Command line.
                 frame.append("Command line appears here".bold())
@@ -145,8 +145,8 @@ public final class Editor {
                 frame.append(makeWelcomeMessage("Welcome to ax editor version 0.1"))
             } else if row == size.rows / 4 + 1  && document.showsWelcome {
                 frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
-            } else if let line = document.row(atIndex: Int(row))  {
-                frame.append(line.render(at: Int(row + 1)))
+            } else if let line = document.row(atIndex: Int(row) + offset.y)  {
+                frame.append(line.render(at: Int(row + 1) + offset.y))
             } else {
                 let tilde = "~"
                     .darkGray()
