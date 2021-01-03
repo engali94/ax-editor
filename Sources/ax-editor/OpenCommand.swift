@@ -29,7 +29,6 @@ public struct  OpenCommand: ParsableCommand {
 }
 
 struct Path {
-    
     func enumerateFullPath(from file: String) throws -> String {
         if isValidPath(file) {
             if FileManager.default.fileExists(atPath: file) {
@@ -87,18 +86,18 @@ struct DocumentManager {
         let name = path.split(separator: "/").last ?? ""
         let langExt = path.split(separator: ".").last ?? ""
         let lang = Config.default.languages.first(where: { $0.extensions.contains(String(langExt)) })
-        print("Path", path.count)
+        
         guard let data = FileManager.default.contents(atPath: path) else {
             FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
-             return Document(rows: [], name: String(name), language: lang)
+            return Document(rows: [Row(text: "")], name: String(name), language: lang)
             //throw Error.documentCouldntBeOpened
         }
-        print(data.count)
+
         if let str = String(data: data, encoding: .utf8) {
             let rows = str.split(separator: "\n").compactMap({ Row(text:String($0)) })
-            print("rows count: ", rows.count, str)
             return Document(rows: rows, name: String(name), language: lang)
         }
+
         return Document(rows: [], name: String(name), language: lang)
     }
     
