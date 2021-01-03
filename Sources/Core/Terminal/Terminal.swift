@@ -137,6 +137,10 @@ public final class Terminal {
         execute(command: .showCursor)
     }
     
+    func setBackgroundColor(_ color: Color) {
+        execute(command: .custom("\u{001B}[48;2;\(41);\(41);\(50)m"))
+    }
+    
     private func listenToWindowSizeChange() {
         interceptor.intercept {
             let newSize = self.getWindowSize()
@@ -164,7 +168,8 @@ extension Terminal {
         case showCursor
         case hideCursor
         case moveCursor(position: Postion)
-        
+        case custom(String)
+
         var rawValue: String {
             switch self {
             case .clean: return "\u{1b}[2J"
@@ -175,6 +180,7 @@ extension Terminal {
             case .hideCursor: return "\u{1b}[?25l"
             case let .moveCursor(position):
                 return "\u{1b}[\(position.y + 1);\(position.x + 1)H"
+            case .custom(let str): return str
             }
         }
         

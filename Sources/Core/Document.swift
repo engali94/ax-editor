@@ -14,6 +14,10 @@ public final class Document {
     private var isDirty = true
     private var undoStack = EventStack<Event>()
     private var redoStack = EventStack<Event>()
+    private var language: Language? = swift
+    private var tokenizer: Tokenizer = .init(language: swift)
+    private var name: String = ""
+    lazy var highlighter = Highlighter(tokenizer: tokenizer)
     
     public init(rows: [Row]) {
         self.rows = rows
@@ -79,29 +83,17 @@ public final class Document {
     }
     
     func scrollIfNeeded(size: Size) {
-//        let maxY = size.rows
-//        let maxX = size.cols
-//        let midY = maxY / 2
-//        let midX = maxX / 2
-//        if lineOffset.x == 0 && cursorPosition.y < maxY && cursorPosition.x < maxX {
-//            lineOffset = .zero()
-//        } else {
-//            lineOffset.y = cursorPosition.y - Int(midY)
-//            cursorPosition.y = Int(midY)
-//            if cursorPosition.x > maxX {
-//                lineOffset.x = cursorPosition.x - Int(midX)
-//                cursorPosition.x = Int(midX)
-//            }
-//        }
-//        if cursorPosition.y < lineOffset.y {
-//            lineOffset.y  = cursorPosition.y
-//        }
         if cursorPosition.y >= lineOffset.y + Int(size.rows) - 2{
             lineOffset.y += 1 //cursorPosition.y - Int(size.rows) + 1
         } else {
             lineOffset.y = max(0, lineOffset.y - 1)
         }
     }
+    
+    func highlight(row: Row) -> String {
+        return highlighter.highlight(code: row.text)
+    }
+    
 }
 
 // MARK: Event
@@ -192,9 +184,6 @@ private extension Document {
 }
 
 extension Document.Event {
-    func reverse() -> Self? {
-        fatalError()
-    }
     
     var isCommitable: Bool {
         switch self {

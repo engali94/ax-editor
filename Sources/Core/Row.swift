@@ -8,14 +8,14 @@ import Foundation
 
 public final class Row {
     public var text: String
-    private(set) var isUpdated: Bool = false
+    public var isUpdated = true
     
     public init(text: String) {
         self.text = text
     }
     
     public func render(at index: Int) -> String {
-        return renderLineNumber(at: index) + text
+        return text//.customBackgroundColor(Defaults.backgroundColor)
     }
     
     public func length() -> Int {
@@ -40,6 +40,7 @@ public final class Row {
     }
     
     func update(text newText: String) {
+        isUpdated = true
         text = newText
     }
     
@@ -51,11 +52,16 @@ public final class Row {
         text.substring(fromIndex: index)
     }
     
-    private func renderLineNumber(at number: Int) -> String {
+    func renderLineNumber(_ number: Int) -> String {
         "\(number)"
             .darkGray()
             .padding(direction: .left, count: 1)
             .padding(direction: .right, count: 2)
+    }
+    
+    func highlight(using highlighter: Highlighter) {
+        //highlighter.highlight(code: text)
+        isUpdated = false
     }
 }
 

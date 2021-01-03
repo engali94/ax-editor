@@ -250,6 +250,14 @@ extension String {
     public func onWhite() -> String {
         return applyStyle(TerminalStyle.onWhite)
     }
+    
+    public func customBackgroundColor(_ color: Color) -> String {
+        applyStyle(TerminalColor.customBackground(color: color))
+    }
+    
+    public func customForegroundColor(_ color: Color) -> String {
+        applyStyle(TerminalColor.customForeground(color: color))
+    }
 }
 
 // https://jonasjacek.github.io/colors/
@@ -510,6 +518,14 @@ public enum TerminalColor: UInt8 {
     case grey85
     case grey89
     case grey93
+    
+    static func customBackground(color: Color) -> TerminalStyleCode {
+        ("\u{001B}[48;2;\(color.r);\(color.g);\(color.b)m", TerminalStyle.reset.open)
+    }
+    
+    static func customForeground(color: Color) -> TerminalStyleCode {
+        ("\u{001B}[38;2;\(color.r);\(color.g);\(color.b)m", TerminalStyle.reset.open)
+    }
     
     public func foregroundStyleCode() -> TerminalStyleCode {
         return ("\u{001B}[38;5;\(self.rawValue)m", TerminalStyle.reset.open)
