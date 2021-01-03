@@ -154,8 +154,10 @@ Contributions are warmly welcomed 🙌
   
 
 # Credits
-
-  
+Thanks to all the authors and contributers of the following tools:
+[ColorizeSwift](https://github.com/mtynior/ColorizeSwift)
+[CrossTerm](https://github.com/crossterm-rs/crossterm) 
+[Ox Editor](https://github.com/curlpipe/ox) 
 
 # Licence
 
