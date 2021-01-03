@@ -45,18 +45,18 @@ extension Language.Defintions: CaseAccessible {
     }
 }
 
-struct Theme: Decodable {
-    typealias Highlights = TokenType
+public struct Theme: Decodable {
+    public typealias Highlights = TokenType
     
-    let backgroundColor: Color
-    let textColor: Color
-    let highlights: [Highlights: Color]
+    public let backgroundColor: Color
+    public let textColor: Color
+    public let highlights: [Highlights: Color]
 }
 
 extension TokenType: Decodable { }
 
 extension Theme {
-    static let vsCode = Theme(
+    public static let vsCode = Theme(
         backgroundColor: .init(r: 40, g: 44, b: 52),
         textColor: .init(r: 171, g: 178, b: 191),
         highlights: [
@@ -81,11 +81,11 @@ public struct Color: Decodable {
 }
 
 public struct Config: Decodable {
-    let tabWidth: Int
-    let theme: Theme
-    let languages: [Language]
+    public let tabWidth: Int
+    public let theme: Theme
+    public let languages: [Language]
 }
 
 extension Config {
-    static let `default` = Config(tabWidth: 4, theme: Theme.vsCode, languages: [swift])
+    public static let `default` = Config(tabWidth: 4, theme: Theme.vsCode, languages: [swift])
 }

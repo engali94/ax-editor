@@ -24,16 +24,13 @@ public final class Editor {
     public func run() {
         terminal.enableRawMode()
         write(STDIN_FILENO, "\u{1b}[?1049h", "\u{1b}[?1049h".utf8.count)
-        //drawTildes()
         terminal.onWindowSizeChange = { [weak self] newSize in
-            print("Termial resized", newSize)
             self?.size = newSize
             self?.update()
         }
         
         repeat {
             update()
-          //  handleInput()
             readKey()
         } while (quit == false)
         exitEditor()
@@ -41,13 +38,14 @@ public final class Editor {
     }
     
     private func update() {
+        terminal.setBackgroundColor(Defaults.backgroundColor)
         terminal.hideCursor()
         terminal.restCursor()
         terminal.clean()
         render()
         terminal.showCursor()
         terminal.flush()
-        document.scrollIfNeeded(size: terminal.getWindowSize())
+        document.scrollIfNeeded(size: size)
         terminal.goto(position: .init(x: document.cursorPosition.x + 4, y: document.cursorPosition.y))
     }
     
@@ -124,29 +122,26 @@ public final class Editor {
     
     private func render() {
         var frame = [""]
-        let rows = terminal.getWindowSize().rows
+        let rows = size.rows
         cursorPosition = document.cursorPosition
         let offset = document.lineOffset
         for row in 0..<rows {
-           // row += UInt16(offset.y)
             if row == size.rows - 1 {
-                // Render Command line.
                 frame.append("Command line appears here".bold())
             } else if row == size.rows - 2 {
-                // Render status line.
                 frame.append(
                     "Status line"
                         .yellow()
                         .bold()
-                        .backgroundColor(.cadetBlue)
+                        .padding(direction: .right, count: Int(terminal.getWindowSize().cols) - "Status line".count)
+                        .customBackgroundColor(.init(r: 59, g: 59, b: 84))
                 )
             } else if row == size.rows / 4 && document.showsWelcome {
-                // Render welcome message if necessary.
                 frame.append(makeWelcomeMessage("Welcome to ax editor version 0.1"))
             } else if row == size.rows / 4 + 1  && document.showsWelcome {
                 frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
             } else if let line = document.row(atIndex: Int(row) + offset.y)  {
-                frame.append(line.render(at: Int(row + 1) + offset.y))
+                frame.append(line.renderLineNumber(Int(row)) + document.highlight(line))
             } else {
                 let tilde = "~"
                     .darkGray()
@@ -154,7 +149,12 @@ public final class Editor {
                 frame.append(tilde)
             }
         }
-        terminal.writeOnScreen(frame.joined(separator: "\r\n"))
+        terminal
+            .writeOnScreen(
+                frame
+                    .joined(separator: "\r\n")
+                    .customBackgroundColor(Defaults.backgroundColor)
+            )
     }
     
     private func makeWelcomeMessage(_ message: String) -> String {
@@ -167,7 +167,6 @@ public final class Editor {
             .padding(direction: .left, count: 1)
             .appending(paddedMsg)
             .green()
-            //.white()//.colorize(with: .white)
         return str
     }
     
@@ -196,30 +195,12 @@ extension String {
     }
 }
 
-extension Editor {
-    enum Key {
-        case char(UInt8)
-        case up
-        case down
-        case left
-        case right
-    }
-
-    // KeyBinding
-    enum ControlKey {
-        case ctrl(key: Key)
-        case alt(key: Key)
-        case shift(key: Key)
-    }
-}
-
-struct Config {
-    
-}
 
 struct Defaults {
     static let lineNoLeftPaddig   = 1 // |<-1
     static let lineNoRightPadding = 2 // 1-->...
+    static let backgroundColor: Color = .init(r: 41, g: 41, b: 50)
+    static let foregroundColor: Color = .init(r: 255, g: 255, b: 255)
     // line number and tilde color
     // default background color
     // default text color

@@ -17,10 +17,17 @@ public final class Document {
     private var language: Language? = swift
     private var tokenizer: Tokenizer = .init(language: swift)
     private var name: String = ""
-    lazy var highlighter = Highlighter(tokenizer: tokenizer)
+    private lazy var highlighter: Highlighter? = Highlighter(tokenizer: tokenizer)
     
-    public init(rows: [Row]) {
+    public init(
+        rows: [Row],
+        name: String = "",
+        language: Language? = nil
+    ) {
         self.rows = rows
+        self.name = name
+        self.language = language
+        showsWelcome = rows.isEmpty
     }
     
     func execute(_ event: Event, commitEvent: Bool = true) {
@@ -90,8 +97,8 @@ public final class Document {
         }
     }
     
-    func highlight(row: Row) -> String {
-        return highlighter.highlight(code: row.text)
+    func highlight(_ row: Row) -> String {
+        return highlighter?.highlight(code: row.text) ?? row.text
     }
     
 }
@@ -113,6 +120,12 @@ extension Document {
 // MARK: - Private Helpers
 private extension Document {
     func insert(character: String, at position: Postion) {
+        showsWelcome = false
+        if rows.isEmpty {
+            rows.append(Row(text: character))
+            moveCursor(toDirection: .right)
+            return
+        }
         rows[position.y].insert(char: character, at: position.x)
         moveCursor(toDirection: .right)
         //print(cursorPosition)
