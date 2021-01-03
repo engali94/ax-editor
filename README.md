@@ -1,4 +1,5 @@
 
+
 # AX Editor
 
   
@@ -96,20 +97,14 @@ OAx is controlled via your keyboard shortcuts. Here are the default shortcuts th
 
 | Keybinding | What it does |
 
+| Keybinding  | What it does  |
 | ------------ | ------------ |
-
 | `Ctrl + D` | Exits the the editor. |
-
 | `Ctrl + S` | Saves the open file to the disk **(To be Implemented)**. |
-
 | `Ctrl + F` | Searches the document for a search query. Allows pressing of <kbd>↑</kbd> and <kbd>←</kbd> to move the cursor to the previous occurance fof the query and <kbd>↓</kbd> and <kbd>→</kbd> to move to the next occurance of the query. Press <kbd>Return</kbd> to cancel the search at the current cursor position or <kbd>Esc</kbd> to cancel the search and return to the initial location of the cursor. Note: this allows you to use regular expressions. **(To be Implemented)**. |
-
 | `Ctrl + U` | Undoes your last action. The changes are committed to the undo stack every time you press the space bar, create / destroy a new line and when there is no activity after a certain period of time which can be used to capture points where you pause for thought or grab a coffee etc... |
-
 | `Ctrl + R` | Redoes your last action. The changes are committed to the undo stack every time you press the space bar, create / destroy a new line and when there is no activity after a certain period of time which can be used to capture points where you pause for thought or grab a coffee etc... |
-
 | `Ctrl + F` | Allows replacing of occurances in the document. Uses the same keybindings as the search feature: <kbd>↑</kbd> and <kbd>←</kbd> to move the cursor to the previous occurance fof the query and <kbd>↓</kbd> and <kbd>→</kbd> to move to the next occurance of the query. You can also press <kbd>Return</kbd>, <kbd>y</kbd> or <kbd>Space</kbd> to carry out the replace action. To exit replace mode once you're finished, you can press <kbd>Esc</kbd> to cancel and return back to your initial cursor position. Note: this allows you to use regular expressions.**(To be Implemented)**.|
-
 | `Ctrl + A` | Carries out a batch replace option. It will prompt you for a target to replace and what you want to replace it with and will then replace every occurance in the document. Note: this allows you to use regular expressions. **(To be Implemented)**.|
 
   
