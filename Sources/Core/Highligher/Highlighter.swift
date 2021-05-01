@@ -13,15 +13,16 @@ public struct Highlighter {
     public func highlight(code: String) -> String {
         var code = code.uncolorized()
         let tokens = tokenizer.tokinze(code)
-        log(tokens.map({
-            $0.kind.rawValue + " \($0.range.lowerBound) \($0.range.upperBound)"
-
-        }).joined(separator: " "))
+       let log = tokens
+        .map { $0.kind.rawValue + " \($0.range.lowerBound) \($0.range.upperBound)" }
+        .joined(separator: " ")
+        Logger.log(event: .debug, destination: .disk, messages: log)
         tokens.forEach({ token in
             let color = self.color(for: token.kind)
             code.highlight(token.text, with: color, at: token.range)
         })
-        log(code)
+        
+        Logger.log(event: .debug, destination: .disk, messages: code)
         return code
     }
 }
@@ -38,8 +39,4 @@ extension String {
         //word = word.customForegroundColor(color)//"\u{001B}[38;2;\(color.r);\(color.g);\(color.b)m" + word +  TerminalStyle.reset.open
         self = replacingOccurrences(of: word, with: word.customForegroundColor(color))
     }
-}
-
-public func log(_ str: String) {
-    try! str.write(toFile: FileManager.default.currentDirectoryPath + "//log.txt", atomically: true, encoding: .utf8)
 }

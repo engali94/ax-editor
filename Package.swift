@@ -6,22 +6,26 @@ import PackageDescription
 let package = Package(
     name: "ax-editor",
     products: [
-         .executable(name: "ax", targets: ["ax-editor"])
+        .executable(name: "ax", targets: ["ax-editor"])
      ],
 
     dependencies: [
-         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0")
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
     ],
 
     targets: [
         .target(
             name: "Core",
             dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "Logging", package: "swift-log")
             ]),
         .target(
             name: "ax-editor",
-            dependencies: ["Core"]
+            dependencies: [
+                "Core",
+            ]
         ),
         .testTarget(
             name: "ax-editorTests",

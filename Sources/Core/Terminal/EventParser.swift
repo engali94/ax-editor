@@ -113,6 +113,7 @@ private extension EventParser {
       }
     }
 
+    // swiftlint:disable cyclomatic_complexity
     /// Translates the ASCII code from escape sequence to its coreeosponding `KeyCode`
     /// - Parameter key: `UInt8` key to be mapped.
     /// - Returns: A key code instance.
@@ -145,3 +146,4 @@ private extension EventParser {
       }
     }
 }
+// swiftlint:enable cyclomatic_complexity

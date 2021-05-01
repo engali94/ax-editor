@@ -32,7 +32,7 @@ public final class EventReader {
     ///   it returns `.failure(Error)``
     /// - seeAlso: `poll`
     public func readBuffer() -> Result<Event, Error> {
-        //sigaction(2, 1, 2)
+        // sigaction(2, 1, 2)
         var chars: [UInt8] = Array(repeating: 0, count: bufferSize)
         let readCount = read(STDIN_FILENO, &chars, bufferSize)
         if readCount != -1 {
