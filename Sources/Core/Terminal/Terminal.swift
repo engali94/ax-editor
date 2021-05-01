@@ -22,10 +22,10 @@ public final class Terminal {
     public var onWindowSizeChange: ((Size) -> Void)?
 
     public init() {
-        let struct_pointer = UnsafeMutablePointer<termios>.allocate(capacity: 1)
-        let struct_memory = struct_pointer.pointee
-        struct_pointer.deallocate()
-        originalTerminal = struct_memory
+        let termiosPointer = UnsafeMutablePointer<termios>.allocate(capacity: 1)
+        let termiosRef = termiosPointer.pointee
+        termiosPointer.deallocate()
+        originalTerminal = termiosRef
         reader = EventReader(parser: EventParser())
         listenToWindowSizeChange()
     }

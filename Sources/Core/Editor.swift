@@ -1,4 +1,4 @@
-/**
+/*
  *  Ax Editor
  *  Copyright (c) Ali Hilal 2020
  *  MIT license - see LICENSE.md
@@ -87,6 +87,7 @@ public final class Editor {
                     document.execute(.splitLine)
                 }
             }
+            
             if event.code == .char("d") && event.modifiers == .some(.control) {
                 exitEditor()
                 return
@@ -149,6 +150,7 @@ public final class Editor {
                 frame.append(tilde)
             }
         }
+        
         terminal
             .writeOnScreen(
                 frame

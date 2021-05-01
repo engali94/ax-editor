@@ -1,7 +1,6 @@
 opt_in_rules: # some rules are only opt-in
   - empty_count
   - redundant_nil_coalescing
-  - switch_case_on_newline
   - force_unwrapping
   - closure_spacing
   - implicitly_unwrapped_optional
@@ -36,3 +35,5 @@ disabled_rules: # rule identifiers to exclude from running
   - trailing_whitespace
   - type_name
   - identifier_name
+  - switch_case_on_newline
+  - switch_case_alignment
