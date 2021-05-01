@@ -21,7 +21,7 @@ A light weigt text editor with syntax highlighting. It is written completly in S
 
 ```bash
 
-swift run XMLJson --help
+swift run ax --help
 
 ```
 
