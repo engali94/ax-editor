@@ -12,7 +12,7 @@ protocol TokenGenerator {
 
 public struct Tokenizer {
     public let language: Language
-    
+
     func tokinze(_ code: String) -> [Token] {
         let generators = self.generators(from: code)
         return generators.flatMap { $0.tokens(from: code) }
@@ -20,7 +20,7 @@ public struct Tokenizer {
 }
 
 private extension Tokenizer {
-  
+
     func generators(from input: String) -> [TokenGenerator] {
         var generators = [TokenGenerator]()
         let keywords = keywordGenerator(language.keywords)
@@ -29,12 +29,12 @@ private extension Tokenizer {
         generators.append(contentsOf: regs)
         return generators
     }
-    
+
     func regexGenerator(_ pattern: String, options: NSRegularExpression.Options = [], tokenType: TokenType) -> TokenGenerator? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {  return nil }
         return RegexTokenGenerator(regularExpression: regex, tokenType: tokenType)
     }
-    
+
     func keywordGenerator(_ words: [String]) -> TokenGenerator {
         return KeywordTokenGenerator(keywords: words)
     }
@@ -46,16 +46,16 @@ private extension Tokenizer {
     struct RegexTokenGenerator: TokenGenerator {
         private let regularExpression: NSRegularExpression
         private let tokenType: TokenType
-        
+
         init(regularExpression: NSRegularExpression, tokenType: TokenType) {
             self.regularExpression = regularExpression
             self.tokenType = tokenType
         }
-        
+
         func tokens(from input: String) -> [Token] {
             generateRegexTokens(source: input)
         }
-        
+
         private func generateRegexTokens(source: String) -> [Token] {
             var tokens = [Token]()
             let fullNSRange = NSRange(location: 0, length: source.utf16.count)
@@ -76,15 +76,15 @@ private extension Tokenizer {
 private extension Tokenizer {
     struct KeywordTokenGenerator: TokenGenerator {
         private let keywords: [String]
-        
+
         init(keywords: [String]) {
             self.keywords = keywords
         }
-        
+
         func tokens(from input: String) -> [Token] {
             generateKeywordTokens(source: input)
         }
-      
+
         private func generateKeywordTokens(source: String) -> [Token] {
             var tokens = [Token]()
             source.enumerateSubstrings(in: source.startIndex..<source.endIndex, options: [.byWords]) { (word, range, _, _) in
@@ -97,7 +97,6 @@ private extension Tokenizer {
         }
     }
 }
-
 
 extension Language.Defintions {
     public var tokenType: TokenType {
@@ -116,4 +115,3 @@ extension Language.Defintions {
         }
     }
 }
-

@@ -4,23 +4,22 @@
  *  MIT license - see LICENSE.md
  */
 
-
 import Foundation
 
 public struct Highlighter {
     public let config: Config = .default
     public let tokenizer: Tokenizer
-    
+
     public func highlight(code: String) -> String {
         var code = code.uncolorized()
         let tokens = tokenizer.tokinze(code)
         log(tokens.map({
             $0.kind.rawValue + " \($0.range.lowerBound) \($0.range.upperBound)"
-            
+
         }).joined(separator: " "))
         tokens.forEach({ token in
             let color = self.color(for: token.kind)
-            code.highlight(token.text,with: color, at: token.range)
+            code.highlight(token.text, with: color, at: token.range)
         })
         log(code)
         return code

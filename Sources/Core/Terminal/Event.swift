@@ -13,7 +13,7 @@ public enum Event: Equatable {
    //case mouse
 }
 
-extension Event: CustomStringConvertible{
+extension Event: CustomStringConvertible {
     public var description: String {
         switch self {
         case .key(let event):
@@ -45,7 +45,7 @@ public struct KeyEvent: Equatable {
     public let code: KeyCode
     /// Additional key modifiers.
     public let modifiers: KeyModifier?
-    
+
     public init(code: KeyCode, modifiers: KeyModifier? = nil) {
         self.code = code
         self.modifiers = modifiers
@@ -96,6 +96,5 @@ public enum KeyCode: Equatable {
     case char(Character)
     /// Escape key.
     case esc
-    
-}
 
+}

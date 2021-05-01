@@ -12,7 +12,7 @@ public struct  OpenCommand: ParsableCommand {
     public init() {}
     @Argument(help: "The file to be edited")
     var file: String?
-    
+
     public mutating func run() throws {
         let terminal = Terminal()
         if let file = file {
@@ -36,12 +36,11 @@ struct Path {
             } else {
                 throw CocoaError.error(.fileNoSuchFile)
             }
-        }
-        else {
+        } else {
             let process = Process()
             process.arguments = ["pwd"]
             let url = URL(fileURLWithPath: "/usr/bin/env")
-            
+
             if #available(OSX 10.13, *) {
                 process.executableURL = url
             } else {
@@ -61,12 +60,12 @@ struct Path {
                     .removingAllWhitespaces
                 return path
             }
-            
+
             process.waitUntilExit()
         }
         return ""
     }
-    
+
     private func isValidPath(_ path: String) -> Bool {
         path.starts(with: "~")  ||
         path.starts(with: "/")  ||
@@ -86,7 +85,7 @@ struct DocumentManager {
         let name = path.split(separator: "/").last ?? ""
         let langExt = path.split(separator: ".").last ?? ""
         let lang = Config.default.languages.first(where: { $0.extensions.contains(String(langExt)) })
-        
+
         guard let data = FileManager.default.contents(atPath: path) else {
             FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
             return Document(rows: [Row(text: "")], name: String(name), language: lang)
@@ -94,13 +93,13 @@ struct DocumentManager {
         }
 
         if let str = String(data: data, encoding: .utf8) {
-            let rows = str.split(separator: "\n").compactMap({ Row(text:String($0)) })
+            let rows = str.split(separator: "\n").compactMap({ Row(text: String($0)) })
             return Document(rows: rows, name: String(name), language: lang)
         }
 
         return Document(rows: [], name: String(name), language: lang)
     }
-    
+
     enum Error: Swift.Error {
         case documentCouldntBeOpened
     }

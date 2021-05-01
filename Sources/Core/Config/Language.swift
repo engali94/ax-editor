@@ -8,7 +8,7 @@ import Foundation
 
 public struct Language: Decodable {
     public typealias Keyword = String
-    
+
     public let name: String
     public let icon: String
     public let extensions: [String]
@@ -18,7 +18,7 @@ public struct Language: Decodable {
 
 public extension Language {
     typealias RegularExpression = String
-    
+
     enum Defintions: Decodable {
         case comments(RegularExpression)
         case strings(RegularExpression)
@@ -32,7 +32,7 @@ public extension Language {
         case headers(RegularExpression)
         case macros(RegularExpression)
         case symbols(RegularExpression)
-        
+
         public init(from decoder: Decoder) throws {
             fatalError("unimplemented")
         }
@@ -47,7 +47,7 @@ extension Language.Defintions: CaseAccessible {
 
 public struct Theme: Decodable {
     public typealias Highlights = TokenType
-    
+
     public let backgroundColor: Color
     public let textColor: Color
     public let highlights: [Highlights: Color]

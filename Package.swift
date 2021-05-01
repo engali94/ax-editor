@@ -8,11 +8,11 @@ let package = Package(
     products: [
          .executable(name: "ax", targets: ["ax-editor"])
      ],
-    
+
     dependencies: [
-         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
+         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0")
     ],
-    
+
     targets: [
         .target(
             name: "Core",
@@ -25,6 +25,6 @@ let package = Package(
         ),
         .testTarget(
             name: "ax-editorTests",
-            dependencies: ["ax-editor"]),
+            dependencies: ["ax-editor"])
     ]
 )
