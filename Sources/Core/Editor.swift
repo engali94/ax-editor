@@ -13,14 +13,14 @@ public final class Editor {
     private var size: Size
     private var cursorPosition: Postion
     private var quit = false
-    
+
     public init(terminal: Terminal, document: Document) {
         self.terminal = terminal
         self.document = document
         self.size = terminal.getWindowSize()
         self.cursorPosition = .init(x: 0, y: 0)
     }
-    
+
     public func run() {
         terminal.enableRawMode()
         write(STDIN_FILENO, "\u{1b}[?1049h", "\u{1b}[?1049h".utf8.count)
@@ -28,7 +28,7 @@ public final class Editor {
             self?.size = newSize
             self?.update()
         }
-        
+
         repeat {
             update()
             readKey()
@@ -36,7 +36,7 @@ public final class Editor {
         exitEditor()
         write(STDIN_FILENO, "\u{1b}[?1049h", "\u{1b}[?1049l".utf8.count)
     }
-    
+
     private func update() {
         terminal.setBackgroundColor(Defaults.backgroundColor)
         terminal.hideCursor()
@@ -48,7 +48,7 @@ public final class Editor {
         document.scrollIfNeeded(size: size)
         terminal.goto(position: .init(x: document.cursorPosition.x + 4, y: document.cursorPosition.y))
     }
-    
+
     private func readKey() {
         while true {
             if terminal.poll(timeout: .milliseconds(16)) {
@@ -60,7 +60,7 @@ public final class Editor {
             }
         }
     }
-    
+
     private func processInput(_ event: Event) {
         switch event {
         case let .key(event):
@@ -73,11 +73,11 @@ public final class Editor {
                     document.execute(.delete(position: cursorPosition))
                 }
             }
-            
+
             if let dir = mapKeyEventToDirection(event.code) {
                 document.execute(.moveTo(direction: dir))
             }
-            
+
             if event.code == .enter {
                 if cursorPosition.x == 0 {
                     document.execute(.insertLineAbove(position: cursorPosition))
@@ -91,25 +91,25 @@ public final class Editor {
                 exitEditor()
                 return
             }
-            
+
             if event.code == .char("u") && event.modifiers == .some(.control) {
                 document.undo()
                 return
             }
-            
+
             if event.code == .char("r") && event.modifiers == .some(.control) {
                 document.redo()
                 return
             }
-            
+
             if case .char(let value) = event.code {
                // terminal.writeOnScreen(String(value))
-                if event.modifiers == .some(.control)  { return }
+                if event.modifiers == .some(.control) { return }
                 document.execute(.insert(char: String(value), position: cursorPosition))
             }
         }
     }
-    
+
     private func mapKeyEventToDirection(_ code: KeyCode) -> Direction? {
         switch code {
         case .up: return .up
@@ -119,7 +119,7 @@ public final class Editor {
         default: return nil
         }
     }
-    
+
     private func render() {
         var frame = [""]
         let rows = size.rows
@@ -140,7 +140,7 @@ public final class Editor {
                 frame.append(makeWelcomeMessage("Welcome to ax editor version 0.1"))
             } else if row == size.rows / 4 + 1  && document.showsWelcome {
                 frame.append(makeWelcomeMessage("A Swift powered text editor by Ali Hilal"))
-            } else if let line = document.row(atIndex: Int(row) + offset.y)  {
+            } else if let line = document.row(atIndex: Int(row) + offset.y) {
                 frame.append(line.renderLineNumber(Int(row)) + document.highlight(line))
             } else {
                 let tilde = "~"
@@ -156,7 +156,7 @@ public final class Editor {
                     .customBackgroundColor(Defaults.backgroundColor)
             )
     }
-    
+
     private func makeWelcomeMessage(_ message: String) -> String {
         let paddingCount = Int(size.cols) / 2  - (message.count / 2)
         var str = ""
@@ -169,7 +169,7 @@ public final class Editor {
             .green()
         return str
     }
-    
+
     private func exitEditor() {
         quit = true
         terminal.refreshScreen()
@@ -183,7 +183,7 @@ extension String {
         case right
         case left
     }
-    
+
     func padding(direction: PaddingDirection, count: Int) -> String {
         let padding = String(repeating: " ", count: count)
         switch direction {
@@ -195,7 +195,6 @@ extension String {
     }
 }
 
-
 struct Defaults {
     static let lineNoLeftPaddig   = 1 // |<-1
     static let lineNoRightPadding = 2 // 1-->...
@@ -206,5 +205,4 @@ struct Defaults {
     // default text color
     // default status line color
     // Tab width
-    
 }

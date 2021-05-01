@@ -185,5 +185,5 @@ public let swift = Language(
         .attributes("(@).+"),
         .dotAccess("\\s*\\.\\w+\\s*?"),
         .properties("\\w\\S\\.\\w\\s+"),
-        .macros("^(#)\\w\\s*"),
+        .macros("^(#)\\w\\s*")
     ])

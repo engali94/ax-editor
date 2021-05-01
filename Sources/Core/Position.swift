@@ -15,7 +15,7 @@ struct Postion {
         self.x = x
         self.y = y
     }
-    
+
     init(_ source: [Int]) {
         precondition(source.count == 2)
         self.x = source[1]

@@ -7,7 +7,7 @@ import Foundation
 /// A type dedicated to intercept UNIX-based systems signals.
 struct SignalInterceptor {
     private let source: DispatchSourceSignal
-    
+
     init(signal: Signal = .SIGWINCH) {
         self.source = DispatchSource.makeSignalSource(signal: signal.rawValue)
     }
@@ -23,7 +23,6 @@ struct SignalInterceptor {
       case SIGWINCH = 28
     }
 
-
     func intercept(action: @escaping() -> Void) {
         source.setEventHandler {
             action()
@@ -31,4 +30,3 @@ struct SignalInterceptor {
         source.resume()
     }
 }
-

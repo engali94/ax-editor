@@ -26,20 +26,15 @@ public struct EventParser {
             let byte = buffer.removeFirst()
             if byte == NonPrintableChar.escape.rawValue {
                 return .key((parseCSI(from: &buffer)))
-            }
-            else if byte == NonPrintableChar.tab.rawValue {
+            } else if byte == NonPrintableChar.tab.rawValue {
                 return .key(.init(code: .tab))
-            }
-            else if byte == NonPrintableChar.enter.rawValue {
+            } else if byte == NonPrintableChar.enter.rawValue {
                 return .key(.init(code: .enter))
-            }
-            else if byte == NonPrintableChar.newLine.rawValue {
+            } else if byte == NonPrintableChar.newLine.rawValue {
                 return .key(.init(code: .enter))
-            }
-            else if byte == NonPrintableChar.backspace.rawValue {
+            } else if byte == NonPrintableChar.backspace.rawValue {
                 return .key(.init(code: .backspace))
-            }
-            else if iscntrl(Int32(byte)) != 0 {
+            } else if iscntrl(Int32(byte)) != 0 {
                 var ascii: UInt8 = 0
                 if  1...26 ~= byte {
                     ascii = (byte - 1) + 97
@@ -48,14 +43,13 @@ public struct EventParser {
                 }
                 let char = Character(UnicodeScalar(ascii))
                 return .key(.init(code: .char(char), modifiers: .control))
-            }
-            else {
+            } else {
                 return .key(parseUtf8Char(from: byte))
             }
         }
         return nil
     }
-    
+
     public enum NonPrintableChar: UInt8 {
         case none      = 0      //"\u{00}"   // \0 NUL
         case tab       = 9      //"\u{09}"   // \t TAB (horizontal)
@@ -69,13 +63,13 @@ public struct EventParser {
 }
 
 private extension EventParser {
-    
+
     func parseUtf8Char(from byte: UInt8 ) -> KeyEvent {
         let char = Character(UnicodeScalar(byte))
         let mod: KeyModifier = char.isUppercase ? .shift : .none
         return .init(code: .char(char), modifiers: mod)
     }
-    
+
     func parseCSI(from buffer: inout [UInt8]) -> KeyEvent {
         var currentByte: UInt8 = 0
         while buffer.first != nil {
@@ -83,19 +77,16 @@ private extension EventParser {
             let remainingBytes = buffer.count
             if currentByte == CSI && remainingBytes == 1 { // [ESC, [,]
                 return KeyEvent(code: mapCSINumber(buffer[0]), modifiers: nil)
-            }
-            else if currentByte == CSI && remainingBytes == 3 { //[ESC, [, NO, NO, ~]
-                let str = toString(ascii: buffer[0]) + toString(ascii:buffer[1])
+            } else if currentByte == CSI && remainingBytes == 3 { //[ESC, [, NO, NO, ~]
+                let str = toString(ascii: buffer[0]) + toString(ascii: buffer[1])
                 guard let number = Int(str) else { return .init(code: .undefined) }
                 return KeyEvent(code: mapCSINumber(UInt8(number)))
-            }
-            else if currentByte == CSI && isNumber(buffer[0]) && toString(ascii: buffer[1]) == ";" {
+            } else if currentByte == CSI && isNumber(buffer[0]) && toString(ascii: buffer[1]) == ";" {
                 // ["1", ";", "2", "B"]
                 let code = mapCSINumber(buffer[3])
                 let mod = isModifer(buffer[2])
                 return KeyEvent(code: code, modifiers: mod)
-            }
-            else if currentByte == SS3 { // F1...4
+            } else if currentByte == SS3 { // F1...4
                 let number = buffer[0]
                 return KeyEvent(code: mapCSINumber(number))
             } else {
@@ -104,16 +95,15 @@ private extension EventParser {
         }
         return .init(code: .undefined)
     }
-    
+
     func toString(ascii: UInt8) -> String {
         String(UnicodeScalar(ascii))
     }
-    
- 
+
     func isNumber(_ key: UInt8) -> Bool {
         return (48...57 ~= key)
     }
-    
+
     func isModifer(_ key: UInt8) -> KeyModifier {
       switch key {
         case  2: return .shift          // ESC [ x ; 2~
@@ -122,7 +112,7 @@ private extension EventParser {
         default: return .none
       }
     }
-    
+
     /// Translates the ASCII code from escape sequence to its coreeosponding `KeyCode`
     /// - Parameter key: `UInt8` key to be mapped.
     /// - Returns: A key code instance.
