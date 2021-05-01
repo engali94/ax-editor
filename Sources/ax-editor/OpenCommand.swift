@@ -4,9 +4,9 @@
  *  MIT license - see LICENSE.md
  */
 
-import Foundation
 import ArgumentParser
 import Core
+import Foundation
 
 public struct  OpenCommand: ParsableCommand {
     public init() {}

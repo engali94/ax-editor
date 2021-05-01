@@ -4,8 +4,8 @@
  *  MIT license - see LICENSE.md
  */
 
-import Foundation
 import Darwin
+import Foundation
 
 public final class Editor {
     private let terminal: Terminal

@@ -2,8 +2,8 @@
 //  EventReader.swift
 //  Core
 
-import Foundation
 import Dispatch
+import Foundation
 
 public final class EventReader {
     private let parser: EventParser

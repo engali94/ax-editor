@@ -1,5 +1,5 @@
 import ArgumentParser
-import Foundation
 import Core
+import Foundation
 
 OpenCommand.main()

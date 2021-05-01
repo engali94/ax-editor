@@ -50,18 +50,18 @@ public final class Document {
         case .insertLineAbove(let position):
             rows.insert(Row(text: ""), at: Int(position.y))
             moveCursor(toDirection: .down)
-            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .up))}
+            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .up)) }
         case .insertLineBelow(let position):
             rows.insert(Row(text: ""), at: Int(position.y + 1))
             moveCursor(toDirection: .down)
             moveCursor(toPosition: .init(x: 0, y: cursorPosition.y))
-            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .up))}
+            commit(event) { undoStack.push(.deleteLine(position: cursorPosition, direction: .up)) }
         case .splitLine:
             splitLine()
-            commit(event) { undoStack.push(.spliceUp)}
+            commit(event) { undoStack.push(.spliceUp) }
         case .spliceUp:
             spliceUp()
-            commit(event) { undoStack.push(.splitLine)}
+            commit(event) { undoStack.push(.splitLine) }
         case .deleteLine(let pos, let dir):
             deleteLine(at: pos, direction: dir)
         case .moveTo(let direction):
