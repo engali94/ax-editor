@@ -31,7 +31,7 @@ private extension Tokenizer {
     }
 
     func regexGenerator(_ pattern: String, options: NSRegularExpression.Options = [], tokenType: TokenType) -> TokenGenerator? {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {  return nil }
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else { return nil }
         return RegexTokenGenerator(regularExpression: regex, tokenType: tokenType)
     }
 
