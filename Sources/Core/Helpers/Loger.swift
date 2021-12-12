@@ -49,12 +49,13 @@ public struct Logger {
     ) {
         guard let desktopDir = NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true).last else { return }
         let string = event.icon + " \(Date()): " + messages.map { "\($0) " }.joined()
-        try? string.write(toFile: desktopDir + "//log.txt", atomically: true, encoding: .utf8)
+        guard let desktopUrl = URL(string: desktopDir) else { return }
+        let fileContent = (try? String(contentsOf: desktopUrl.appendingPathComponent("log.txt"))) ?? ""
+        let finalLog = fileContent.appending("\n " + string)
+        
+        try? finalLog.write(toFile: desktopDir + "//log.txt", atomically: true, encoding: .utf8)
     }
     
-    public func log(_ str: String) {
-        
-    }
 
 }
 
