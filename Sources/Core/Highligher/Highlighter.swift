@@ -17,10 +17,10 @@ public struct Highlighter {
         .map { $0.kind.rawValue + " \($0.range.lowerBound) \($0.range.upperBound)" }
         .joined(separator: " ")
         Logger.log(event: .debug, destination: .disk, messages: log)
-        tokens.forEach({ token in
+        tokens.forEach { token in
             let color = self.color(for: token.kind)
             code.highlight(token.text, with: color, at: token.range)
-        })
+        }
         
         Logger.log(event: .debug, destination: .disk, messages: code)
         return code
@@ -28,8 +28,8 @@ public struct Highlighter {
 }
 
 private extension Highlighter {
-    func color(for key: TokenType) -> Color {
-        config.theme.highlights[key] ?? Color(r: 250, g: 141, b: 87)
+    func color(for token: TokenType) -> Color {
+        config.theme.highlights[token] ?? Color(r: 250, g: 141, b: 87)
     }
 }
 
